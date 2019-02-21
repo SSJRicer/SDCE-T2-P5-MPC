@@ -8,12 +8,12 @@
 
 using CppAD::AD;
 using Eigen::VectorXd;
+using std::cout;
+using std::endl;
 
-/**
- * TODO: Set the timestep length and duration
- */
-size_t N = 0;
-double dt = 0;
+// Prediction Horizon (T) = 10 sec
+size_t N = 40;
+double dt = 0.25;
 
 // This value assumes the model presented in the classroom is used.
 //
