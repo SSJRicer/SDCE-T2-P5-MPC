@@ -15,6 +15,8 @@
 using nlohmann::json;
 using std::string;
 using std::vector;
+using std::cout;
+using std::endl;
 
 // For converting back and forth between radians and degrees.
 constexpr double pi() { return M_PI; }
@@ -54,6 +56,13 @@ int main() {
            */
           double steer_value;
           double throttle_value;
+
+          // Handling crossing the max/min values:
+          if (steer_value > 1) steer_value = 1;
+          else if (steer_value < -1) steer_value = -1;
+
+          if (throttle_value > 1) throttle_value = 1;
+          else if (throttle_value < -1) throttle_value = -1;
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the 
