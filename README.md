@@ -3,6 +3,34 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+## Rubric Criteria
+
+### Compilation
+#### "Your code should compile."
+
+The code compiles without any errors with cmake & make.
+
+### Implementation
+#### "The Model"
+
+The algorithm follows exactly what I learned in the lessons:
+* Setting the gain (K) of each component via **PID::Init**.
+* Calculating the error of each component with the given CTE via **PID:UpdateError**.
+* Setting the steering angle via **PID::TotalError**.
+
+#### "Timestep Length & Elapsed Duration (N & dt)"
+
+#### "Polynomial Fitting & MPC Preprocessing"
+
+#### "Model Predictive Control with Latency"
+
+### Simulation
+#### "The vehicle must successfully drive a lap around the track."
+
+The vehicle does indeed successfully drive a lap without rolling over any surfaces.
+
+---
+
 ## Dependencies
 
 * cmake >= 3.5
