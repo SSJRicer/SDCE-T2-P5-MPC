@@ -13,11 +13,14 @@ The code compiles without any errors with cmake & make.
 ### Implementation
 #### "The Model"
 
-The algorithm follows exactly what I learned in the lessons:
-* Setting the gain (K) of each component via **PID::Init**.
-* Calculating the error of each component with the given CTE via **PID:UpdateError**.
-* Setting the steering angle via **PID::TotalError**.
+The model used is a Kinematic model (a simplified dynamic model) that ignores tire forces, gravity and mass, as we
+learned in class. The simplification reduces the accuracy of the models, but it also makes them more tractable.
+The model looks as follows:
 
+[IMAGE](PLACEHOLDER_HTTP)
+
+* 'x, y': Car's (x, y) position (In the car's space).
+* '&Psi': Car's heading.
 #### "Timestep Length & Elapsed Duration (N & dt)"
 
 #### "Polynomial Fitting & MPC Preprocessing"
