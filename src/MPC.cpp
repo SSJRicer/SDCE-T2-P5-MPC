@@ -6,11 +6,11 @@
 #include <vector>
 #include "Eigen-3.3/Eigen/Core"
 
+using namespace std;
 using CppAD::AD;
 using Eigen::VectorXd;
 
-// Prediction Horizon (T) = 1 sec
-// N/dt:
+// Timestep length/Elapsed duration (N/dt):
 // 10/0.1  - Default, works quite well.
 // 25/0.01 - Slower drive but smoother turns.
 // 40/0.5  - Can't converge (dt too high).
@@ -19,18 +19,6 @@ using Eigen::VectorXd;
 // 15/0.05 - Best result, smooth turns and steady drive.
 size_t N = 15;
 double dt = 0.05;
-
-// This value assumes the model presented in the classroom is used.
-//
-// It was obtained by measuring the radius formed by running the vehicle in the
-//   simulator around in a circle with a constant steering angle and velocity on
-//   a flat terrain.
-//
-// Lf was tuned until the the radius formed by the simulating the model
-//   presented in the classroom matched the previous radius.
-//
-// This is the length from front to CoG that has a similar radius.
-const double Lf = 2.67;
 
 // Vars vector starting indices for each element:
 const size_t x_start = 0;
@@ -60,32 +48,32 @@ class FG_eval {
 
     // Based on the reference state (cte, psi error, velocity):
     // Setting the weights for each element:
-    const int cte_w = 1; // 1000
-    const int epsi_w = 1; // 1000
+    const int cte_w = 1;
+    const int epsi_w = 1;
     const int v_w = 1;
 
-    for (int t = 0; t < N; t++) {
+    for (unsigned int t = 0; t < N; t++) {
         fg[0] += cte_w  * CppAD::pow(vars[cte_start + t], 2);
         fg[0] += epsi_w * CppAD::pow(vars[epsi_start + t], 2);
         fg[0] += v_w    * CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
-    // Minimizing the use of actuators (steeing angle, accelration):
+    // Minimizing the use of actuators (steeing angle, acceleration):
     // Setting the weights for each element:
-    const int delta_w = 50;  // 50
-    const int a_w = 50;  // 50
+    const int delta_w = 50;
+    const int a_w = 50;
 
-    for (int t = 0; t < N - 1; t++) {
+    for (unsigned int t = 0; t < N - 1; t++) {
         fg[0] += delta_w * CppAD::pow(vars[delta_start + t], 2);
         fg[0] += a_w     * CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimizing the value gap between sequential actuations:
     // Setting the weights for each element:
-    const int delta_change_w = 5000; // 250000
-    const int a_change_w = 100;  // 5000
+    const int delta_change_w = 5000;
+    const int a_change_w = 100;
 
-    for (int t = 0; t < N - 2; t++) {
+    for (unsigned int t = 0; t < N - 2; t++) {
         fg[0] += delta_change_w * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
         fg[0] += a_change_w     * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
@@ -103,7 +91,7 @@ class FG_eval {
     fg[1 + epsi_start] = vars[epsi_start];
 
     // The rest of the constraints
-    for (int t = 1; t < N; ++t) {
+    for (unsigned int t = 1; t < N; ++t) {
       // Grabbing each element in both time states (t & t+1):
       AD<double> x0 = vars[x_start + t - 1];
       AD<double> x1 = vars[x_start + t];
@@ -172,7 +160,7 @@ std::vector<double> MPC::Solve(VectorXd &state, VectorXd &coeffs) {
   // Initial value of the independent variables.
   // SHOULD BE 0 besides initial state.
   Dvector vars(n_vars);
-  for (int i = 0; i < n_vars; ++i) {
+  for (unsigned int i = 0; i < n_vars; ++i) {
     vars[i] = 0;
   }
 
@@ -181,20 +169,20 @@ std::vector<double> MPC::Solve(VectorXd &state, VectorXd &coeffs) {
 
   // Set all non-actuators upper and lowerlimits
   // to the max negative and positive values.
-  for (int i = 0; i < delta_start; ++i) {
+  for (unsigned int i = 0; i < delta_start; ++i) {
     vars_lowerbound[i] = -1.0e19;
     vars_upperbound[i] = 1.0e19;
   }
 
   // The upper and lower limits of delta are set to -25 and 25
   // degrees (values in radians).
-  for (int i = delta_start; i < a_start; ++i) {
+  for (unsigned int i = delta_start; i < a_start; ++i) {
     vars_lowerbound[i] = -0.436332;
     vars_upperbound[i] = 0.436332;
   }
 
   // Acceleration/decceleration upper and lower limits.
-  for (int i = a_start; i < n_vars; ++i) {
+  for (unsigned int i = a_start; i < n_vars; ++i) {
     vars_lowerbound[i] = -1.0;
     vars_upperbound[i] = 1.0;
   }
@@ -203,7 +191,7 @@ std::vector<double> MPC::Solve(VectorXd &state, VectorXd &coeffs) {
   // Should be 0 besides initial state.
   Dvector constraints_lowerbound(n_constraints);
   Dvector constraints_upperbound(n_constraints);
-  for (int i = 0; i < n_constraints; ++i) {
+  for (unsigned int i = 0; i < n_constraints; ++i) {
     constraints_lowerbound[i] = 0;
     constraints_upperbound[i] = 0;
   }
@@ -260,7 +248,7 @@ std::vector<double> MPC::Solve(VectorXd &state, VectorXd &coeffs) {
 
   result.push_back(solution.x[delta_start]);
   result.push_back(solution.x[a_start]);
-  for (int i = 0; i < N - 2; i++) {
+  for (unsigned int i = 0; i < N - 2; i++) {
     result.push_back(solution.x[x_start + i + 1]);
     result.push_back(solution.x[y_start + i + 1]);
   }

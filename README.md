@@ -17,15 +17,67 @@ The model used is a Kinematic model (a simplified dynamic model) that ignores ti
 learned in class. The simplification reduces the accuracy of the models, but it also makes them more tractable.
 The model looks as follows:
 
-[IMAGE](PLACEHOLDER_HTTP)
+![MODEL](https://github.com/SSJRicer/SDCE-T2-P5-MPC/blob/master/Images/Model.png?raw=true)
 
-* 'x, y': Car's (x, y) position (In the car's space).
-* '&Psi': Car's heading.
+State vector:
+* `x`   : Car's x position (in the car's space).
+* `y`   : Car's y position (in the car's space).
+* `psi` : Car's heading.
+* `v`   : Car's velocity.
+* `cte` : Car's cross track error (from the middle of the lane).
+* `epsi`: Car's heading error.
+
+Actuator/Constraints vector:
+* `delta`: Steering angle.
+* `a`    : Car's throttle.
+
+Where L<sub>f</sub> (given by Udacity) is the distance from the car's center of mass to its front wheels' axis.
+
+The model takes the initial state of the car at each iteration of movement and sends it to the
+solver which, using the IPOPT and CPPAD libraries, minimizes the cost function (J) in order to find the right
+acceleration and steering angle so our car will drive in the middle of the lane.
+
+The cost function consists of the following factors (all of which were learned in class):
+* Squared sum of CTE and EPSI (our references were 0) and (v - v<sub>ref</sub>) (reference = 100 so our car drives faster).
+* Squared sum of actuators (penalizing their use) - impacts their magnitude.
+* Squared sum of actuators change between each step - adds temporal smoothness.
+
+The weights of each of the squared sums were chosen through intuitive trial & error.
+
 #### "Timestep Length & Elapsed Duration (N & dt)"
+
+The Prediction Horizon (T = N * dt) is chosen first (as suggested in class) since we need to first
+figure out how many seconds into the future we want to predict.
+ 
+* **Note:** Technically it will be better if the overall time T was chosen dynamically, proportional 
+to the velocity, but given our choice of parameters and reference velocity, anywhere between 0.75-1.5 seconds
+should do the job.
+
+As for the timestep length (N) and elapsed duration of each step (dt) - I went with a trial & error 
+approach based on the initial given values of 10/0.1 and discovered the following:
+
+|   N   |   dt   |  Conclusion  |
+|:-----:|:------:|:------------:|
+|   10  |   0.1  | Initial given values - works quite well                         |
+|   25  |   0.01 | Slower drive but smoother turns                                 |
+|   40  |   0.5  | Can't converge (dt too high)                                    |
+|   40  |   0.1  | Better start from previous choice, but still too many steps     |
+|   20  |   0.1  | Too many steps - loses control on turns                         |
+|   **15**  |   **0.05** | **Final & best result - smooth turns and steady drive** |
 
 #### "Polynomial Fitting & MPC Preprocessing"
 
+I preprocessed the waypoints given by the simulator to the car's coordinate system, thus making the 
+origin point and heading angle zero - car as reference point (src/main.cpp - lines 57-65).
+
+Afterwards I created a 3rd degree polynomial from the transformed waypoints in order to calculate the CTE and EPSI
+in the model (src/main.cpp - lines 67-73).
+
 #### "Model Predictive Control with Latency"
+
+Handling a 100 millisecond latency was done in the initial state, which was taken based on the car's
+coordinate system (initial state being (0, 0) with heading 0), and delayed by 100 millisecond (t+1 state)
+and only then sending the state into the solver (src/main - lines 75-100).
 
 ### Simulation
 #### "The vehicle must successfully drive a lap around the track."
